@@ -1,0 +1,2060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CineVault — Movie Ticket Booking</title>
+  <style>
+/* ================================================================
+   style.css — CineVault Movie Ticket Booking System
+   Theme: Deep cinema noir with neon-gold accents
+   Fonts: Bebas Neue (display) · DM Sans (body) · JetBrains Mono
+   ================================================================ */
+
+/* ── DESIGN TOKENS ── */
+:root {
+  --bg:           #070809;
+  --bg-2:         #0d0f12;
+  --bg-3:         #131720;
+  --surface:      #161b26;
+  --surface-2:    #1d2333;
+  --surface-3:    #242c3d;
+  --border:       #252d40;
+  --border-hi:    #323d55;
+
+  --gold:         #f5c842;
+  --gold-dim:     #c9a12a;
+  --gold-glow:    rgba(245,200,66,0.15);
+  --gold-soft:    rgba(245,200,66,0.08);
+
+  --cyan:         #22d3ee;
+  --cyan-glow:    rgba(34,211,238,0.15);
+
+  --green:        #4ade80;
+  --green-dim:    rgba(74,222,128,0.12);
+  --red:          #f87171;
+  --red-dim:      rgba(248,113,113,0.12);
+
+  /* Seat colors */
+  --seat-normal:    #1e6fcf;
+  --seat-premium:   #9333ea;
+  --seat-vip:       #c97c22;
+  --seat-selected:  #f5c842;
+  --seat-booked:    #2e3549;
+  --seat-booked-txt:#404a64;
+
+  --text-primary:   #e8ecf4;
+  --text-secondary: #7d8aaa;
+  --text-muted:     #3f4d6a;
+
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  --r-sm:  6px;
+  --r-md:  12px;
+  --r-lg:  18px;
+  --r-xl:  24px;
+
+  --shadow: 0 8px 32px rgba(0,0,0,0.5);
+  --shadow-gold: 0 0 32px rgba(245,200,66,0.2);
+}
+
+/* ── RESET ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  grid-template-columns: 1fr 360px;
+  grid-template-areas:
+    "header header"
+    "main   aside";
+  overflow-x: hidden;
+}
+
+/* Film grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  z-index: 9999;
+  opacity: 0.35;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-2); }
+::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 99px; }
+
+/* ════════════════ HEADER ════════════════ */
+.site-header {
+  grid-area: header;
+  background: rgba(7,8,9,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 200;
+}
+
+.header-inner {
+  max-width: 100%;
+  padding: 0 28px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.logo-reel {
+  font-size: 1.6rem;
+  color: var(--gold);
+  animation: reelSpin 6s linear infinite;
+  display: inline-block;
+}
+
+@keyframes reelSpin {
+  from { transform: rotate(0); }
+  to   { transform: rotate(360deg); }
+}
+
+.logo-text {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  letter-spacing: 0.05em;
+  color: var(--gold);
+}
+
+.header-nav {
+  display: flex; align-items: center; gap: 16px;
+}
+
+.nav-pill {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 99px;
+  background: var(--gold-soft);
+  border: 1px solid rgba(245,200,66,0.2);
+  color: var(--gold);
+}
+
+.stack-status {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  display: flex; align-items: center; gap: 7px;
+  padding: 5px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+}
+
+.ss-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:.5; transform:scale(.8); }
+}
+
+/* ════════════════ APP SHELL ════════════════ */
+.app-shell {
+  grid-area: main;
+  padding: 32px 28px;
+  overflow-y: auto;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 10%, rgba(245,200,66,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 80% 80%, rgba(34,211,238,0.03) 0%, transparent 60%),
+    var(--bg);
+}
+
+/* ════════════════ STEP SECTIONS ════════════════ */
+.step-section {
+  display: none;
+  animation: fadeSlideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.step-section.active { display: block; }
+
+@keyframes fadeSlideUp {
+  from { opacity:0; transform: translateY(24px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+.step-header {
+  margin-bottom: 32px;
+  position: relative;
+}
+
+.step-num {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--gold);
+  display: block;
+  margin-bottom: 6px;
+  opacity: 0.8;
+}
+
+.step-header h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.step-header p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: var(--gold);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: opacity 0.15s;
+}
+
+.back-btn:hover { opacity: 0.7; }
+
+/* ════════════════ MOVIES GRID ════════════════ */
+.movies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.movie-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.22s, border-color 0.22s, box-shadow 0.22s;
+  position: relative;
+}
+
+.movie-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--gold-dim);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.5), var(--shadow-gold);
+}
+
+.movie-card.selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold), var(--shadow-gold);
+}
+
+.mc-poster {
+  width: 100%;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  display: block;
+  background: var(--surface-2);
+  position: relative;
+}
+
+/* Poster fallback — colored gradient with title */
+.mc-poster-fallback {
+  width: 100%;
+  aspect-ratio: 2/3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: 0.06em;
+  text-align: center;
+  padding: 16px;
+  line-height: 1.2;
+}
+
+.mc-rating-badge {
+  position: absolute;
+  top: 10px; right: 10px;
+  background: rgba(7,8,9,0.85);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--r-sm);
+  padding: 3px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+.mc-body {
+  padding: 14px 16px;
+}
+
+.mc-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.03em;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mc-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mc-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: var(--surface-3);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.mc-tag.genre { color: var(--cyan); border-color: rgba(34,211,238,0.2); background: rgba(34,211,238,0.06); }
+
+.mc-select-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(245,200,66,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  font-size: 2.5rem;
+}
+
+.movie-card.selected .mc-select-overlay { opacity: 1; }
+
+/* ════════════════ THEATER SELECTION ════════════════ */
+.theaters-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.theater-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 20px 24px;
+  transition: border-color 0.2s;
+}
+
+.theater-card:hover { border-color: var(--border-hi); }
+
+.tc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tc-name {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  letter-spacing: 0.03em;
+}
+
+.tc-features {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+
+.tc-feat {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 99px;
+  border: 1px solid;
+}
+
+.tc-feat.dolby { color: #a78bfa; border-color: rgba(167,139,250,0.3); background: rgba(167,139,250,0.08); }
+.tc-feat.imax   { color: var(--cyan); border-color: rgba(34,211,238,0.3); background: var(--cyan-glow); }
+.tc-feat.recliner { color: var(--gold); border-color: rgba(245,200,66,0.3); background: var(--gold-soft); }
+
+.tc-showtimes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.showtime-btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 10px 20px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.92rem;
+  transition: all 0.18s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.showtime-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--gold-soft);
+}
+
+.showtime-btn.selected {
+  background: var(--gold);
+  color: #0d0e10;
+  border-color: var(--gold);
+  font-weight: 700;
+}
+
+.st-avail {
+  font-size: 0.65rem;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+/* ════════════════ SCREEN & SEATS ════════════════ */
+.screen-wrap {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.screen-bar {
+  height: 6px;
+  width: 70%;
+  margin: 0 auto 8px;
+  background: linear-gradient(90deg, transparent, rgba(245,200,66,0.4), var(--gold), rgba(245,200,66,0.4), transparent);
+  border-radius: 99px;
+  box-shadow: 0 0 24px rgba(245,200,66,0.3), 0 0 60px rgba(245,200,66,0.1);
+}
+
+.screen-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  opacity: 0.5;
+  text-transform: uppercase;
+}
+
+/* Seat Legend */
+.seat-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.legend-item b { color: var(--text-primary); }
+
+.leg-box {
+  width: 22px; height: 22px;
+  border-radius: var(--r-sm);
+  border: 2px solid transparent;
+  display: inline-block;
+}
+
+.leg-box.available.normal   { background: var(--seat-normal);   border-color: rgba(30,111,207,0.6); }
+.leg-box.available.premium  { background: var(--seat-premium);  border-color: rgba(147,51,234,0.6); }
+.leg-box.available.vip      { background: var(--seat-vip);      border-color: rgba(201,124,34,0.6); }
+.leg-box.selected           { background: var(--seat-selected); border-color: var(--gold); }
+.leg-box.booked             { background: var(--seat-booked);   border-color: var(--seat-booked); }
+
+/* Seat Area */
+.seat-area {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 32px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.seat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.row-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.seat-gap { width: 20px; flex-shrink: 0; }
+
+/* Individual Seat */
+.seat {
+  width: 34px; height: 34px;
+  border-radius: 6px 6px 3px 3px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.5);
+}
+
+/* Seat back nub */
+.seat::before {
+  content: '';
+  position: absolute;
+  top: -5px; left: 3px; right: 3px;
+  height: 4px;
+  border-radius: 3px 3px 0 0;
+  background: inherit;
+  opacity: 0.7;
+}
+
+.seat.normal  { background: var(--seat-normal);  border-color: rgba(30,111,207,0.5); }
+.seat.premium { background: var(--seat-premium); border-color: rgba(147,51,234,0.5); }
+.seat.vip     { background: var(--seat-vip);     border-color: rgba(201,124,34,0.5); }
+
+.seat.normal:hover:not(.booked)  { transform: scale(1.15); box-shadow: 0 4px 12px rgba(30,111,207,0.5); z-index:1; }
+.seat.premium:hover:not(.booked) { transform: scale(1.15); box-shadow: 0 4px 12px rgba(147,51,234,0.5); z-index:1; }
+.seat.vip:hover:not(.booked)     { transform: scale(1.15); box-shadow: 0 4px 12px rgba(201,124,34,0.5); z-index:1; }
+
+.seat.selected {
+  background: var(--seat-selected) !important;
+  border-color: var(--gold) !important;
+  color: #0d0f12;
+  transform: scale(1.12);
+  box-shadow: 0 0 14px rgba(245,200,66,0.5);
+  z-index: 1;
+  animation: seatPop 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+@keyframes seatPop {
+  from { transform: scale(0.85); }
+  to   { transform: scale(1.12); }
+}
+
+.seat.booked {
+  background: var(--seat-booked) !important;
+  border-color: var(--seat-booked) !important;
+  cursor: not-allowed;
+  color: var(--seat-booked-txt);
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Booking Summary Bar */
+.booking-summary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: 20px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  position: sticky;
+  bottom: 20px;
+  box-shadow: 0 -4px 40px rgba(0,0,0,0.6);
+}
+
+.summary-left { display: flex; flex-direction: column; gap: 6px; }
+
+.sum-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+}
+
+.sum-row span { color: var(--text-secondary); }
+
+.sum-row strong {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.btn-confirm {
+  background: var(--gold);
+  color: #0d0f12;
+  border: none;
+  border-radius: var(--r-md);
+  padding: 14px 32px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.btn-confirm:hover:not(:disabled) {
+  background: #f9d84f;
+  box-shadow: 0 6px 24px rgba(245,200,66,0.4);
+  transform: translateY(-2px);
+}
+
+.btn-confirm:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ════════════════ SIDE PANEL ════════════════ */
+.side-panel {
+  grid-area: aside;
+  background: var(--bg-2);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: sticky;
+  top: 60px;
+  height: calc(100vh - 60px);
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+
+.pt-icon { color: var(--gold); font-size: 1.1rem; }
+
+.pt-badge {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: var(--gold-soft);
+  border: 1px solid rgba(245,200,66,0.2);
+  color: var(--gold);
+}
+
+/* Stack action buttons */
+.stack-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.18s;
+}
+
+.cancel-btn {
+  background: var(--red-dim);
+  border-color: rgba(248,113,113,0.3);
+  color: var(--red);
+}
+
+.cancel-btn:hover:not(:disabled) {
+  background: rgba(248,113,113,0.2);
+  box-shadow: 0 0 16px rgba(248,113,113,0.15);
+}
+
+.undo-btn {
+  background: var(--cyan-glow);
+  border-color: rgba(34,211,238,0.3);
+  color: var(--cyan);
+}
+
+.undo-btn:hover:not(:disabled) {
+  background: rgba(34,211,238,0.15);
+  box-shadow: 0 0 16px rgba(34,211,238,0.15);
+}
+
+.sab:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Stack info row */
+.stack-info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 12px 16px;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sinfo {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sinfo-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.sinfo-val {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+/* TOP indicator */
+.top-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--gold-soft);
+}
+
+.ti-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+
+.ti-value {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+/* History list */
+.history-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.he-icon { font-size: 2.4rem; opacity: 0.3; }
+.history-empty p { font-size: 0.88rem; color: var(--text-secondary); }
+.history-empty small { font-size: 0.74rem; }
+
+/* Booking card in history */
+.booking-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  animation: slideIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.booking-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--gold);
+}
+
+.booking-card.is-top { border-color: rgba(245,200,66,0.3); }
+.booking-card.is-top::before { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+
+.booking-card.cancelled {
+  opacity: 0.4;
+  border-color: var(--border);
+}
+
+.booking-card.cancelled::before { background: var(--text-muted); }
+
+@keyframes slideIn {
+  from { opacity:0; transform:translateY(-14px) scale(0.97); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+
+@keyframes popOut {
+  to { opacity:0; transform:translateX(40px) scale(0.95); max-height:0; padding:0; margin:0; border-width:0; }
+}
+
+.booking-card.popping { animation: popOut 0.3s ease-in forwards; }
+
+.bc-movie {
+  font-weight: 700;
+  font-size: 0.88rem;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bc-meta {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  line-height: 1.6;
+}
+
+.bc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bc-price {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+.bc-seats {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  padding: 2px 7px;
+  border-radius: 99px;
+}
+
+.bc-top-badge {
+  position: absolute;
+  top: 8px; right: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  background: var(--gold-soft);
+  border: 1px solid rgba(245,200,66,0.2);
+  padding: 2px 6px;
+  border-radius: 99px;
+}
+
+.bc-cancelled-badge {
+  position: absolute;
+  top: 8px; right: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--red);
+  background: var(--red-dim);
+  border: 1px solid rgba(248,113,113,0.2);
+  padding: 2px 6px;
+  border-radius: 99px;
+}
+
+/* ════════════════ CONFIRMATION MODAL ════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7,8,9,0.85);
+  backdrop-filter: blur(8px);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.modal-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: 40px 36px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transform: scale(0.88) translateY(24px);
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.modal-overlay.visible .modal-box {
+  transform: scale(1) translateY(0);
+}
+
+.modal-glow {
+  position: absolute;
+  top: -60px; left: 50%;
+  transform: translateX(-50%);
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(245,200,66,0.25), transparent 70%);
+  pointer-events: none;
+}
+
+.modal-checkmark {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #0d0f12;
+  font-size: 1.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  animation: checkBounce 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.2s both;
+}
+
+@keyframes checkBounce {
+  from { transform: scale(0) rotate(-30deg); opacity:0; }
+  to   { transform: scale(1) rotate(0); opacity:1; }
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 20px;
+  color: var(--gold);
+}
+
+.modal-details {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 16px;
+  text-align: left;
+  margin-bottom: 16px;
+  font-size: 0.88rem;
+  line-height: 2;
+}
+
+.modal-details b { color: var(--text-primary); }
+.modal-details span { color: var(--text-secondary); }
+
+.modal-ticket-strip {
+  background: linear-gradient(135deg, var(--gold-soft), rgba(245,200,66,0.04));
+  border: 1px dashed rgba(245,200,66,0.3);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mts-id {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--gold);
+  opacity: 0.7;
+}
+
+.mts-price {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+.modal-close-btn {
+  background: var(--gold);
+  color: #0d0f12;
+  border: none;
+  border-radius: var(--r-md);
+  padding: 13px 36px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.12s;
+}
+
+.modal-close-btn:hover {
+  background: #f9d84f;
+  transform: translateY(-2px);
+}
+
+/* ════════════════ TOAST NOTIFICATIONS ════════════════ */
+.toast-container {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 12px 20px;
+  border-radius: var(--r-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+  border: 1px solid;
+  pointer-events: none;
+}
+
+@keyframes toastIn {
+  from { opacity:0; transform: translateY(16px) scale(0.92); }
+  to   { opacity:1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toastOut {
+  to { opacity:0; transform: translateY(-10px) scale(0.92); }
+}
+
+.toast.success { background: rgba(7,8,9,0.9); border-color: rgba(74,222,128,0.3); color: var(--green); }
+.toast.error   { background: rgba(7,8,9,0.9); border-color: rgba(248,113,113,0.3); color: var(--red); }
+.toast.info    { background: rgba(7,8,9,0.9); border-color: rgba(245,200,66,0.3);  color: var(--gold); }
+.toast.warning { background: rgba(7,8,9,0.9); border-color: rgba(34,211,238,0.3);  color: var(--cyan); }
+
+/* ════════════════ RESPONSIVE ════════════════ */
+@media (max-width: 960px) {
+  body {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "aside"
+      "main";
+  }
+
+  .side-panel {
+    height: auto;
+    position: static;
+    border-left: none;
+    border-bottom: 1px solid var(--border);
+    max-height: 360px;
+  }
+
+  .app-shell { padding: 20px 16px; }
+}
+
+@media (max-width: 520px) {
+  .movies-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .seat { width: 28px; height: 28px; }
+  .booking-summary { flex-direction: column; align-items: flex-start; }
+  .btn-confirm { width: 100%; }
+}
+
+</style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ══════════════ HEADER ══════════════ -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="logo" href="#">
+        <span class="logo-reel">◎</span>
+        <span class="logo-text">CineVault</span>
+      </a>
+      <nav class="header-nav">
+        <span class="nav-pill active">Now Showing</span>
+        <span class="stack-status" id="stackStatus">
+          <span class="ss-dot"></span>
+          Stack: <b id="stackCount">0</b> bookings
+        </span>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ══════════════ MAIN APP ══════════════ -->
+  <div class="app-shell">
+
+    <!-- ════ STEP 1: MOVIE SELECTION ════ -->
+    <section class="step-section active" id="step1">
+      <div class="step-header">
+        <span class="step-num">01</span>
+        <h2>Choose Your Movie</h2>
+        <p>Select from today's blockbusters</p>
+      </div>
+
+      <div class="movies-grid" id="moviesGrid">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- ════ STEP 2: SHOWTIME SELECTION ════ -->
+    <section class="step-section" id="step2">
+      <div class="step-header">
+        <button class="back-btn" onclick="goToStep(1)">← Back</button>
+        <span class="step-num">02</span>
+        <h2>Select Theater & Showtime</h2>
+        <p id="selectedMovieLabel">—</p>
+      </div>
+
+      <div class="theaters-wrap" id="theatersWrap">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- ════ STEP 3: SEAT SELECTION ════ -->
+    <section class="step-section" id="step3">
+      <div class="step-header">
+        <button class="back-btn" onclick="goToStep(2)">← Back</button>
+        <span class="step-num">03</span>
+        <h2>Pick Your Seats</h2>
+        <p id="showInfoLabel">—</p>
+      </div>
+
+      <!-- Screen -->
+      <div class="screen-wrap">
+        <div class="screen-bar"></div>
+        <span class="screen-label">SCREEN</span>
+      </div>
+
+      <!-- Seat Legend -->
+      <div class="seat-legend">
+        <div class="legend-item"><span class="leg-box available normal"></span> Normal <b>₹180</b></div>
+        <div class="legend-item"><span class="leg-box available premium"></span> Premium <b>₹280</b></div>
+        <div class="legend-item"><span class="leg-box available vip"></span> VIP <b>₹450</b></div>
+        <div class="legend-item"><span class="leg-box selected"></span> Selected</div>
+        <div class="legend-item"><span class="leg-box booked"></span> Booked</div>
+      </div>
+
+      <!-- Seat Grid -->
+      <div class="seat-area" id="seatArea"><!-- Rendered by JS --></div>
+
+      <!-- Booking Summary -->
+      <div class="booking-summary" id="bookingSummary">
+        <div class="summary-left">
+          <div class="sum-row">
+            <span>Selected Seats:</span>
+            <strong id="sumSeats">None</strong>
+          </div>
+          <div class="sum-row">
+            <span>Total Price:</span>
+            <strong id="sumPrice">₹0</strong>
+          </div>
+        </div>
+        <button class="btn-confirm" id="btnConfirm" onclick="confirmBooking()" disabled>
+          Confirm Booking →
+        </button>
+      </div>
+    </section>
+
+  </div><!-- /app-shell -->
+
+  <!-- ══════════════ SIDE PANEL ══════════════ -->
+  <aside class="side-panel" id="sidePanel">
+
+    <div class="panel-title">
+      <span class="pt-icon">⬡</span>
+      <span>Booking Stack</span>
+      <span class="pt-badge" id="ptBadge">LIFO</span>
+    </div>
+
+    <!-- Stack action buttons -->
+    <div class="stack-actions">
+      <button class="sab cancel-btn" id="btnCancelLast" onclick="popBooking()" disabled>
+        <span>↓</span> Cancel Last
+      </button>
+      <button class="sab undo-btn" id="btnUndoCancel" onclick="undoCancel()" disabled>
+        <span>↺</span> Undo Cancel
+      </button>
+    </div>
+
+    <!-- Stack info bars -->
+    <div class="stack-info-row">
+      <div class="sinfo">
+        <span class="sinfo-label">Booking Stack</span>
+        <span class="sinfo-val" id="bookingStackSize">0</span>
+      </div>
+      <div class="sinfo">
+        <span class="sinfo-label">Cancel Stack</span>
+        <span class="sinfo-val" id="cancelStackSize">0</span>
+      </div>
+    </div>
+
+    <!-- TOP indicator -->
+    <div class="top-indicator" id="topIndicator">
+      <span class="ti-label">◀ TOP of Stack</span>
+      <span class="ti-value" id="tiValue">Empty</span>
+    </div>
+
+    <!-- Booking history list -->
+    <div class="history-list" id="historyList">
+      <div class="history-empty" id="historyEmpty">
+        <div class="he-icon">🎬</div>
+        <p>No bookings yet</p>
+        <small>Book a ticket to see it here</small>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ══════════════ CONFIRMATION MODAL ══════════════ -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box" id="modalBox">
+      <div class="modal-glow"></div>
+      <div class="modal-checkmark" id="modalCheckmark">✓</div>
+      <h2 class="modal-title">Booking Confirmed!</h2>
+      <div class="modal-details" id="modalDetails"><!-- JS --></div>
+      <div class="modal-ticket-strip" id="modalTicketStrip"><!-- JS --></div>
+      <button class="modal-close-btn" onclick="closeModal()">Continue Booking</button>
+    </div>
+  </div>
+
+  <!-- ══════════════ TOAST ══════════════ -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+/* ================================================================
+   script.js — CineVault Movie Ticket Booking System
+   Advanced Stack (LIFO) Implementation
+   ================================================================
+
+   TWO STACKS:
+   ─────────────────────────────────────────────────────────────
+   bookingStack  → All confirmed bookings (LIFO)
+   cancelStack   → All cancelled bookings (LIFO, for undo)
+
+   OPERATIONS:
+   ─────────────────────────────────────────────────────────────
+   pushBooking(booking)  → Push onto bookingStack
+   popBooking()          → Pop from bookingStack, push to cancelStack
+   undoCancel()          → Pop from cancelStack, push back to bookingStack
+   ================================================================ */
+
+
+/* ═══════════════════════════════════════════════
+   ──────────── APPLICATION DATA ────────────
+   ═══════════════════════════════════════════════ */
+
+const MOVIES = [
+  {
+    id: 1,
+    title: "Dune: Messiah",
+    genre: "Sci-Fi",
+    duration: "2h 45m",
+    rating: "9.1",
+    language: "English",
+    gradient: "linear-gradient(135deg, #1a0a2e 0%, #3d1a54 50%, #6b2fa0 100%)",
+    emoji: "🪐"
+  },
+  {
+    id: 2,
+    title: "Shadow Protocol",
+    genre: "Thriller",
+    duration: "2h 10m",
+    rating: "8.4",
+    language: "English",
+    gradient: "linear-gradient(135deg, #0a1a1a 0%, #0e3d3d 50%, #1a6b6b 100%)",
+    emoji: "🕵️"
+  },
+  {
+    id: 3,
+    title: "Iron Phoenix",
+    genre: "Action",
+    duration: "2h 25m",
+    rating: "8.8",
+    language: "English",
+    gradient: "linear-gradient(135deg, #1a0a00 0%, #5c2a00 50%, #c95c00 100%)",
+    emoji: "🔥"
+  },
+  {
+    id: 4,
+    title: "Echoes of Time",
+    genre: "Drama",
+    duration: "2h 05m",
+    rating: "8.2",
+    language: "English",
+    gradient: "linear-gradient(135deg, #0a1a0a 0%, #1a4d1a 50%, #2d8c2d 100%)",
+    emoji: "⏳"
+  },
+  {
+    id: 5,
+    title: "Midnight Nexus",
+    genre: "Horror",
+    duration: "1h 55m",
+    rating: "7.9",
+    language: "English",
+    gradient: "linear-gradient(135deg, #0f0005 0%, #3d0015 50%, #8c0030 100%)",
+    emoji: "👁️"
+  },
+  {
+    id: 6,
+    title: "Quantum Storm",
+    genre: "Sci-Fi",
+    duration: "2h 30m",
+    rating: "8.6",
+    language: "English",
+    gradient: "linear-gradient(135deg, #001a26 0%, #004d73 50%, #0099cc 100%)",
+    emoji: "⚡"
+  }
+];
+
+const THEATERS = [
+  {
+    id: "pvr-imax",
+    name: "PVR IMAX Nexus",
+    features: ["IMAX", "Dolby Atmos"],
+    showtimes: ["09:30 AM", "12:45 PM", "04:00 PM", "07:30 PM", "10:45 PM"]
+  },
+  {
+    id: "inox-4dx",
+    name: "INOX 4DX Grand",
+    features: ["4DX", "Dolby", "Recliner"],
+    showtimes: ["10:00 AM", "01:30 PM", "05:00 PM", "08:15 PM"]
+  },
+  {
+    id: "cinepolis-gold",
+    name: "Cinepolis Gold",
+    features: ["Recliner", "Dolby"],
+    showtimes: ["11:00 AM", "02:30 PM", "06:00 PM", "09:00 PM"]
+  }
+];
+
+/* Seat layout per theater
+   R = row label, seats = array of { id, type }
+   Types: N = normal, P = premium, V = VIP      */
+const SEAT_PRICES = { N: 180, P: 280, V: 450 };
+const SEAT_CLASS  = { N: 'normal', P: 'premium', V: 'vip' };
+const SEAT_LABEL  = { N: 'Normal', P: 'Premium', V: 'VIP' };
+
+/* Build the seat layout dynamically */
+function buildSeatLayout() {
+  const layout = [];
+  // Rows A-C: Normal (8 seats + gap)
+  for (const row of ['A','B','C']) {
+    const seats = [];
+    for (let i = 1; i <= 12; i++) {
+      seats.push({ id: `${row}${i}`, type: 'N', gap: i === 7 });
+    }
+    layout.push({ row, seats });
+  }
+  // Rows D-F: Premium
+  for (const row of ['D','E','F']) {
+    const seats = [];
+    for (let i = 1; i <= 12; i++) {
+      seats.push({ id: `${row}${i}`, type: 'P', gap: i === 7 });
+    }
+    layout.push({ row, seats });
+  }
+  // Rows G-H: VIP
+  for (const row of ['G','H']) {
+    const seats = [];
+    for (let i = 1; i <= 10; i++) {
+      seats.push({ id: `${row}${i}`, type: 'V', gap: i === 6 });
+    }
+    layout.push({ row, seats });
+  }
+  return layout;
+}
+
+const SEAT_LAYOUT = buildSeatLayout();
+
+
+/* ═══════════════════════════════════════════════
+   ──────────── STACK DATA STRUCTURES ────────────
+   ═══════════════════════════════════════════════ */
+
+const bookingStack = [];   // Main booking stack (LIFO)
+const cancelStack  = [];   // Cancel/undo stack (LIFO)
+
+/* Tracks which seats are booked per show key */
+const bookedSeatsMap = {};  // key: `${movieId}_${theaterId}_${showtime}` → Set of seatIds
+
+function getShowKey(movieId, theaterId, showtime) {
+  return `${movieId}_${theaterId}_${showtime.replace(/\s/g, '')}`;
+}
+
+
+/* ═══════════════════════════════════════════════
+   ──────────── CORE STACK OPERATIONS ────────────
+   ═══════════════════════════════════════════════ */
+
+/**
+ * PUSH a booking onto the bookingStack
+ * @param {object} booking - { movieName, theater, showTime, seats, totalPrice, bookingTime, showKey }
+ */
+function pushBooking(booking) {
+  // Push onto stack (LIFO — new item becomes TOP)
+  bookingStack.push(booking);
+
+  // Mark the seats as booked in our map
+  const key = booking.showKey;
+  if (!bookedSeatsMap[key]) bookedSeatsMap[key] = new Set();
+  booking.seats.forEach(s => bookedSeatsMap[key].add(s.id));
+
+  // Sync UI
+  updateStackUI();
+  renderHistoryList();
+  updateStackStatus();
+
+  console.log('[PUSH] Booking added to stack:', booking);
+  console.log('[STACK]', bookingStack.map(b => b.movieName + ' - ' + b.seats.map(s=>s.id).join(',')));
+}
+
+/**
+ * POP the last booking from bookingStack (Cancel Last)
+ * Popped booking is PUSHED onto cancelStack (for undo)
+ */
+function popBooking() {
+  if (bookingStack.length === 0) {
+    showToast('⚠ Stack Underflow — No bookings to cancel!', 'error');
+    return;
+  }
+
+  // Animate the top card out
+  const cards = document.querySelectorAll('.booking-card:not(.cancelled)');
+  if (cards.length > 0) {
+    cards[0].classList.add('popping');
+  }
+
+  setTimeout(() => {
+    // POP from bookingStack ← Core Stack Operation
+    const cancelled = bookingStack.pop();
+
+    // Push to cancel stack (for possible undo)
+    cancelStack.push(cancelled);
+
+    // Un-mark those seats
+    const key = cancelled.showKey;
+    if (bookedSeatsMap[key]) {
+      cancelled.seats.forEach(s => bookedSeatsMap[key].delete(s.id));
+    }
+
+    // Refresh current seat view if user is looking at same show
+    if (
+      state.selectedMovie?.id === getMovieIdFromShowKey(cancelled.showKey) &&
+      state.selectedTheater?.id === getTheaterIdFromShowKey(cancelled.showKey)
+    ) {
+      updateSeatAvailability();
+    }
+
+    // Sync UI
+    updateStackUI();
+    renderHistoryList();
+    updateStackStatus();
+
+    showToast(`✖ Cancelled: ${cancelled.movieName} — ${cancelled.seats.map(s=>s.id).join(', ')}`, 'error');
+    console.log('[POP] Cancelled booking:', cancelled);
+    console.log('[CANCEL STACK]', cancelStack.map(b => b.movieName));
+  }, 280);
+}
+
+/**
+ * UNDO the last cancellation
+ * Pops from cancelStack and pushes back onto bookingStack
+ */
+function undoCancel() {
+  if (cancelStack.length === 0) {
+    showToast('⚠ Cancel Stack is empty — nothing to undo!', 'warning');
+    return;
+  }
+
+  // Pop from cancel stack
+  const restored = cancelStack.pop();
+
+  // Check if seats are still free (another booking may have taken them)
+  const key = restored.showKey;
+  const currentlyBooked = bookedSeatsMap[key] || new Set();
+  const conflict = restored.seats.filter(s => currentlyBooked.has(s.id));
+
+  if (conflict.length > 0) {
+    showToast(`⚠ Cannot undo — seats ${conflict.map(s=>s.id).join(',')} already rebooked!`, 'error');
+    cancelStack.push(restored); // put it back
+    return;
+  }
+
+  // Push back onto bookingStack
+  bookingStack.push(restored);
+
+  // Re-mark seats as booked
+  if (!bookedSeatsMap[key]) bookedSeatsMap[key] = new Set();
+  restored.seats.forEach(s => bookedSeatsMap[key].add(s.id));
+
+  // Refresh seat view
+  if (
+    state.selectedMovie?.id === getMovieIdFromShowKey(restored.showKey) &&
+    state.selectedTheater?.id === getTheaterIdFromShowKey(restored.showKey)
+  ) {
+    updateSeatAvailability();
+  }
+
+  updateStackUI();
+  renderHistoryList();
+  updateStackStatus();
+
+  showToast(`↺ Restored: ${restored.movieName} — ${restored.seats.map(s=>s.id).join(', ')}`, 'info');
+  console.log('[UNDO] Restored booking:', restored);
+}
+
+/* Helper: extract movie id from show key */
+function getMovieIdFromShowKey(key) {
+  return parseInt(key.split('_')[0]);
+}
+
+function getTheaterIdFromShowKey(key) {
+  return key.split('_')[1];
+}
+
+
+/* ═══════════════════════════════════════════════
+   ──────────── APPLICATION STATE ────────────────
+   ═══════════════════════════════════════════════ */
+
+const state = {
+  selectedMovie:    null,
+  selectedTheater:  null,
+  selectedShowtime: null,
+  selectedSeats:    [],   // Array of { id, type, price }
+  currentShowKey:   null
+};
+
+
+/* ═══════════════════════════════════════════════
+   ──────────── STEP NAVIGATION ───────────────────
+   ═══════════════════════════════════════════════ */
+
+function goToStep(n) {
+  document.querySelectorAll('.step-section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`step${n}`).classList.add('active');
+
+  // Reset state going backwards
+  if (n <= 2) {
+    state.selectedSeats = [];
+    updateSummary();
+  }
+  if (n <= 1) {
+    state.selectedTheater  = null;
+    state.selectedShowtime = null;
+    state.currentShowKey   = null;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════
+   ──────────── STEP 1: MOVIE RENDER ─────────────
+   ═══════════════════════════════════════════════ */
+
+function renderMovies() {
+  const grid = document.getElementById('moviesGrid');
+  grid.innerHTML = MOVIES.map(m => `
+    <div class="movie-card" id="mc-${m.id}" onclick="selectMovie(${m.id})">
+      <div class="mc-poster-fallback" style="background:${m.gradient}">
+        <span style="font-size:3.5rem;margin-bottom:8px">${m.emoji}</span>
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.05em;color:#fff">${m.title}</span>
+      </div>
+      <div class="mc-rating-badge">★ ${m.rating}</div>
+      <div class="mc-select-overlay">★</div>
+      <div class="mc-body">
+        <div class="mc-title">${m.title}</div>
+        <div class="mc-meta">
+          <span class="mc-tag genre">${m.genre}</span>
+          <span class="mc-tag">${m.duration}</span>
+          <span class="mc-tag">${m.language}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectMovie(movieId) {
+  state.selectedMovie = MOVIES.find(m => m.id === movieId);
+
+  // Visual feedback
+  document.querySelectorAll('.movie-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById(`mc-${movieId}`).classList.add('selected');
+
+  // Brief delay for animation
+  setTimeout(() => {
+    document.getElementById('selectedMovieLabel').textContent = state.selectedMovie.title;
+    renderTheaters();
+    goToStep(2);
+  }, 200);
+}
+
+
+/* ═══════════════════════════════════════════════
+   ──────────── STEP 2: THEATER & SHOWTIME ────────
+   ═══════════════════════════════════════════════ */
+
+function renderTheaters() {
+  const wrap = document.getElementById('theatersWrap');
+  wrap.innerHTML = THEATERS.map(th => `
+    <div class="theater-card">
+      <div class="tc-header">
+        <span class="tc-name">${th.name}</span>
+        <div class="tc-features">
+          ${th.features.map(f => `<span class="tc-feat ${f.toLowerCase()}">${f}</span>`).join('')}
+        </div>
+      </div>
+      <div class="tc-showtimes">
+        ${th.showtimes.map(st => {
+          const key    = getShowKey(state.selectedMovie.id, th.id, st);
+          const booked = (bookedSeatsMap[key] || new Set()).size;
+          const total  = 106; // total seats
+          const avail  = total - booked;
+          return `
+            <button class="showtime-btn" onclick="selectShowtime('${th.id}', '${st}')">
+              ${st}
+              <span class="st-avail">${avail} seats left</span>
+            </button>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectShowtime(theaterId, showtime) {
+  state.selectedTheater  = THEATERS.find(t => t.id === theaterId);
+  state.selectedShowtime = showtime;
+  state.currentShowKey   = getShowKey(state.selectedMovie.id, theaterId, showtime);
+  state.selectedSeats    = [];
+
+  document.getElementById('showInfoLabel').textContent =
+    `${state.selectedMovie.title} · ${state.selectedTheater.name} · ${showtime}`;
+
+  renderSeats();
+  updateSummary();
+  goToStep(3);
+}
+
+
+/* ═══════════════════════════════════════════════
+   ──────────── STEP 3: SEAT LAYOUT ───────────────
+   ═══════════════════════════════════════════════ */
+
+function renderSeats() {
+  const area   = document.getElementById('seatArea');
+  const booked = bookedSeatsMap[state.currentShowKey] || new Set();
+
+  area.innerHTML = SEAT_LAYOUT.map(rowData => {
+    const seatsHTML = rowData.seats.map(seat => {
+      const isBooked   = booked.has(seat.id);
+      const isSelected = state.selectedSeats.some(s => s.id === seat.id);
+      const cls = [
+        'seat',
+        SEAT_CLASS[seat.type],
+        isBooked   ? 'booked'   : '',
+        isSelected ? 'selected' : ''
+      ].filter(Boolean).join(' ');
+
+      return `
+        ${seat.gap ? '<div class="seat-gap"></div>' : ''}
+        <div
+          class="${cls}"
+          id="seat-${seat.id}"
+          title="${isBooked ? 'Already booked' : seat.id + ' · ' + SEAT_LABEL[seat.type] + ' · ₹' + SEAT_PRICES[seat.type]}"
+          onclick="${isBooked ? '' : `toggleSeat('${seat.id}', '${seat.type}')`}"
+        >${seat.id.replace(/[A-Z]/, '')}</div>
+      `;
+    }).join('');
+
+    return `
+      <div class="seat-row">
+        <span class="row-label">${rowData.row}</span>
+        ${seatsHTML}
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleSeat(seatId, type) {
+  const idx = state.selectedSeats.findIndex(s => s.id === seatId);
+  const el  = document.getElementById(`seat-${seatId}`);
+
+  if (idx === -1) {
+    // Select seat
+    state.selectedSeats.push({ id: seatId, type, price: SEAT_PRICES[type] });
+    el.classList.add('selected');
+  } else {
+    // Deselect seat
+    state.selectedSeats.splice(idx, 1);
+    el.classList.remove('selected');
+  }
+
+  updateSummary();
+}
+
+function updateSeatAvailability() {
+  /* Re-render only seat status — called after cancel/undo */
+  const booked = bookedSeatsMap[state.currentShowKey] || new Set();
+  document.querySelectorAll('.seat').forEach(el => {
+    const seatId = el.id.replace('seat-', '');
+    if (booked.has(seatId)) {
+      el.classList.add('booked');
+      el.classList.remove('selected');
+      el.onclick = null;
+      el.title = 'Already booked';
+    } else {
+      el.classList.remove('booked');
+      // Determine type from layout
+      const row  = SEAT_LAYOUT.find(r => r.seats.some(s => s.id === seatId));
+      const seat = row?.seats.find(s => s.id === seatId);
+      if (seat) {
+        el.onclick = () => toggleSeat(seatId, seat.type);
+        el.title = `${seatId} · ${SEAT_LABEL[seat.type]} · ₹${SEAT_PRICES[seat.type]}`;
+      }
+    }
+  });
+  // Refilter selected seats to remove any that got re-booked
+  const booked2 = bookedSeatsMap[state.currentShowKey] || new Set();
+  state.selectedSeats = state.selectedSeats.filter(s => !booked2.has(s.id));
+  updateSummary();
+}
+
+/* ── BOOKING SUMMARY ── */
+function updateSummary() {
+  const seats    = state.selectedSeats;
+  const total    = seats.reduce((sum, s) => sum + s.price, 0);
+  const sumSeats = document.getElementById('sumSeats');
+  const sumPrice = document.getElementById('sumPrice');
+  const btnConf  = document.getElementById('btnConfirm');
+
+  sumSeats.textContent = seats.length > 0
+    ? seats.map(s => `${s.id}(${SEAT_LABEL[s.type][0]})`).join(', ')
+    : 'None';
+
+  sumPrice.textContent = `₹${total.toLocaleString('en-IN')}`;
+  btnConf.disabled     = seats.length === 0;
+}
+
+
+/* ═══════════════════════════════════════════════
+   ──────────── CONFIRM BOOKING ───────────────────
+   ═══════════════════════════════════════════════ */
+
+function confirmBooking() {
+  if (state.selectedSeats.length === 0) {
+    showToast('⚠ Please select at least one seat.', 'warning');
+    return;
+  }
+
+  const totalPrice = state.selectedSeats.reduce((sum, s) => sum + s.price, 0);
+  const bookingId  = 'CV' + Date.now().toString().slice(-8);
+
+  const booking = {
+    bookingId,
+    movieName   : state.selectedMovie.title,
+    movieEmoji  : state.selectedMovie.emoji,
+    theater     : state.selectedTheater.name,
+    showTime    : state.selectedShowtime,
+    seats       : [...state.selectedSeats],
+    totalPrice,
+    bookingTime : new Date().toLocaleString('en-IN', { hour12: true }),
+    showKey     : state.currentShowKey
+  };
+
+  // PUSH onto bookingStack ← Core Stack Operation
+  pushBooking(booking);
+
+  // Show confirmation modal
+  showConfirmationModal(booking);
+
+  // Mark seats as booked visually
+  state.selectedSeats.forEach(s => {
+    const el = document.getElementById(`seat-${s.id}`);
+    if (el) {
+      el.classList.remove('selected');
+      el.classList.add('booked');
+      el.onclick = null;
+      el.title   = 'Already booked';
+    }
+  });
+
+  // Clear selected seats
+  state.selectedSeats = [];
+  updateSummary();
+}
+
+
+/* ═══════════════════════════════════════════════
+   ──────────── MODAL ─────────────────────────────
+   ═══════════════════════════════════════════════ */
+
+function showConfirmationModal(booking) {
+  const overlay = document.getElementById('modalOverlay');
+  const details = document.getElementById('modalDetails');
+  const strip   = document.getElementById('modalTicketStrip');
+
+  const seatBreakdown = Object.entries(
+    booking.seats.reduce((acc, s) => {
+      acc[s.type] = (acc[s.type] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([t, count]) => `${count}× ${SEAT_LABEL[t]}`).join(', ');
+
+  details.innerHTML = `
+    <div><span>Movie: </span><b>${booking.movieEmoji} ${booking.movieName}</b></div>
+    <div><span>Theater: </span><b>${booking.theater}</b></div>
+    <div><span>Show: </span><b>${booking.showTime}</b></div>
+    <div><span>Seats: </span><b>${booking.seats.map(s=>s.id).join(', ')}</b></div>
+    <div><span>Breakdown: </span><b>${seatBreakdown}</b></div>
+    <div><span>Booked at: </span><b>${booking.bookingTime}</b></div>
+  `;
+
+  strip.innerHTML = `
+    <span class="mts-id"># ${booking.bookingId}</span>
+    <span class="mts-price">₹${booking.totalPrice.toLocaleString('en-IN')}</span>
+  `;
+
+  overlay.classList.add('visible');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('visible');
+}
+
+// Close modal on overlay click
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+
+/* ═══════════════════════════════════════════════
+   ──────────── HISTORY LIST RENDER ───────────────
+   ═══════════════════════════════════════════════ */
+
+function renderHistoryList() {
+  const list       = document.getElementById('historyList');
+  const emptyEl    = document.getElementById('historyEmpty');
+
+  // Combine all bookings for display
+  // bookingStack items shown as active, cancelStack items shown as cancelled
+  const activeIds  = new Set(bookingStack.map(b => b.bookingId));
+
+  // Build display list: bookingStack (top first) + cancelStack items not in booking stack
+  const allBookings = [];
+
+  // Add active bookings, newest first (TOP of stack = index length-1)
+  for (let i = bookingStack.length - 1; i >= 0; i--) {
+    allBookings.push({ ...bookingStack[i], status: 'active', isTop: i === bookingStack.length - 1 });
+  }
+
+  // Add cancelled bookings
+  for (let i = cancelStack.length - 1; i >= 0; i--) {
+    allBookings.push({ ...cancelStack[i], status: 'cancelled', isTop: false });
+  }
+
+  if (allBookings.length === 0) {
+    list.innerHTML = `
+      <div class="history-empty" id="historyEmpty">
+        <div class="he-icon">🎬</div>
+        <p>No bookings yet</p>
+        <small>Book a ticket to see it here</small>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = allBookings.map((b, idx) => `
+    <div class="booking-card ${b.isTop ? 'is-top' : ''} ${b.status === 'cancelled' ? 'cancelled' : ''}">
+      ${b.isTop ? '<span class="bc-top-badge">◀ TOP</span>' : ''}
+      ${b.status === 'cancelled' ? '<span class="bc-cancelled-badge">CANCELLED</span>' : ''}
+      <div class="bc-movie">${b.movieEmoji || '🎬'} ${b.movieName}</div>
+      <div class="bc-meta">
+        ${b.theater}<br/>
+        ${b.showTime} · ${b.bookingTime}
+      </div>
+      <div class="bc-footer">
+        <span class="bc-price">₹${b.totalPrice.toLocaleString('en-IN')}</span>
+        <span class="bc-seats">${b.seats.map(s=>s.id).join(', ')}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+
+/* ═══════════════════════════════════════════════
+   ──────────── STACK UI SYNC ─────────────────────
+   ═══════════════════════════════════════════════ */
+
+function updateStackUI() {
+  // Update stack size indicators
+  document.getElementById('bookingStackSize').textContent = bookingStack.length;
+  document.getElementById('cancelStackSize').textContent  = cancelStack.length;
+
+  // TOP indicator
+  const tiValue = document.getElementById('tiValue');
+  if (bookingStack.length > 0) {
+    const top = bookingStack[bookingStack.length - 1];
+    tiValue.textContent = `${top.movieEmoji} ${top.movieName}`;
+  } else {
+    tiValue.textContent = 'Empty';
+  }
+
+  // Enable / disable action buttons
+  document.getElementById('btnCancelLast').disabled = bookingStack.length === 0;
+  document.getElementById('btnUndoCancel').disabled  = cancelStack.length === 0;
+}
+
+function updateStackStatus() {
+  document.getElementById('stackCount').textContent = bookingStack.length;
+}
+
+
+/* ═══════════════════════════════════════════════
+   ──────────── TOAST NOTIFICATIONS ───────────────
+   ═══════════════════════════════════════════════ */
+
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const toast     = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.animation = 'toastOut 0.3s ease-in forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+
+/* ═══════════════════════════════════════════════
+   ──────────── KEYBOARD SHORTCUTS ────────────────
+   ═══════════════════════════════════════════════ */
+
+document.addEventListener('keydown', function(e) {
+  // Escape closes modal
+  if (e.key === 'Escape') closeModal();
+
+  // Ctrl+Z = undo cancel
+  if (e.ctrlKey && e.key === 'z') {
+    e.preventDefault();
+    undoCancel();
+  }
+});
+
+
+/* ═══════════════════════════════════════════════
+   ──────────── INITIALISATION ────────────────────
+   ═══════════════════════════════════════════════ */
+
+function init() {
+  renderMovies();
+  updateStackUI();
+  renderHistoryList();
+
+  console.log('%c CineVault Loaded ', 'background:#f5c842;color:#0d0f12;font-weight:bold;padding:4px 12px;border-radius:4px;');
+  console.log('%c bookingStack & cancelStack initialized. ', 'color:#f5c842');
+  console.log('%c Ctrl+Z = Undo Cancel | Stack operations logged below. ', 'color:#22d3ee');
+}
+
+init();
+
+</script>
+</body>
+</html>
